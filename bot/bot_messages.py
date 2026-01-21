@@ -41,3 +41,16 @@ TRAINING_STARTED = """⚙️ Training models...
 This may take a few minutes depending on the dataset size.
 Please wait ⏳
 """
+
+TRAINING_COMPLETED = """
+✅ Prediction Result
+
+Best model: {model_name}
+MAE (mean absolute error): {best_score}
+
+📌 Example predictions:
+- Actual: {y_test}
+- Predicted: {predictions}
+
+If you want, I can show more details or other metrics.
+"""
