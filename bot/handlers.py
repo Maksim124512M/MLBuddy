@@ -9,12 +9,15 @@ from aiogram.types import Message
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 
+from bot.utils import save_dataset_as_csv
+
 router = Router()
 
 class MakingPrediction(StatesGroup):
     csv_dataset_id = State()
     task_type = State()
     target = State()
+    dataset_path = State()
 
 
 @router.message(Command('start'))
@@ -67,7 +70,12 @@ async def target_setting(message: Message, state: FSMContext):
 
     if message.text in columns:
         await state.update_data(target=message.text)
+        await state.set_state(MakingPrediction.dataset_path)
+
+        file_path = save_dataset_as_csv(df, message.from_user.id, file_id)
+        
         await message.answer(bot.bot_messages.TRAINING_STARTED)
+        await state.update_data(dataset_path=file_path)
 
         await state.clear()
     else:
