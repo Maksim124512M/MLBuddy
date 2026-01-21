@@ -1,4 +1,4 @@
-WELCOME_MESSAGE = """👋 Welcome to MLLBuddy!
+WELCOME_MESSAGE = """👋 Welcome to MLBuddy!
 
 I help you build machine learning models automatically.
 No code. No setup. Just upload your dataset.
@@ -49,8 +49,7 @@ Best model: {model_name}
 MAE (mean absolute error): {best_score}
 
 📌 Example predictions:
-- Actual: {y_test}
 - Predicted: {predictions}
+- Params: {params}
 
-If you want, I can show more details or other metrics.
 """

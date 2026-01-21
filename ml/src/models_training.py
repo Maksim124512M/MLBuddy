@@ -26,23 +26,23 @@ def regression_training(df_path: str, target: str) -> list:
     """
 
     MODELS = {
-        'LinReg': LinearRegression(),
+        'LinearRegression': LinearRegression(),
         'Ridge': Ridge(solver='auto'),
-        'TreeReg': DecisionTreeRegressor(),
-        'RF': RandomForestRegressor(),
-        'XGB': XGBRegressor(),
-        'LGBM': LGBMRegressor(force_col_wise=True),
+        'DesicionTree': DecisionTreeRegressor(),
+        'RandomForest': RandomForestRegressor(),
+        'XGBoost': XGBRegressor(),
+        'LightGBM': LGBMRegressor(force_col_wise=True),
     }
 
     results = []
 
     grid_params = {
-        'RF': {
+        'RandomForest': {
             'model__n_estimators': [100, 200],
             'model__max_depth': [None, 10, 20],
             'model__min_samples_split': [2, 5],
         },
-        'XGB': {
+        'XGBoost': {
             'model__n_estimators': [100, 200],
             'model__max_depth': [3, 6],
             'model__learning_rate': [0.01, 0.1],
@@ -50,12 +50,12 @@ def regression_training(df_path: str, target: str) -> list:
         'Ridge': {
             'model__alpha': [0.01, 0.1, 1.0, 10.0],
         },
-        'TreeReg': {
+        'DesicionTree': {
             'model__max_depth': [None, 4, 6, 8],
             'model__min_samples_split': [2, 5, 10],
             'model__min_samples_leaf': [1, 2, 4]
         },
-        'LGBM': {
+        'LightGBM': {
             'model__n_estimators': [100, 300, 500, 1000],
             'model__learning_rate': [0.01, 0.03, 0.05, 0.1],
             'model__num_leaves': [20, 31, 50, 70, 100],
@@ -84,7 +84,7 @@ def regression_training(df_path: str, target: str) -> list:
             
         X_test = pd.DataFrame(X_test, columns=X_train.columns)
 
-        if model_name == 'LinReg':
+        if model_name == 'LinearRegression':
             pipeline.fit(X_train, y_train)
             
             y_pred = pipeline.predict(X_test)
@@ -99,7 +99,7 @@ def regression_training(df_path: str, target: str) -> list:
         
         params = grid_params[model_name]
 
-        grid = RandomizedSearchCV(estimator=pipeline, param_distributions=params, n_iter=8,
+        grid = RandomizedSearchCV(estimator=pipeline, param_distributions=params, n_iter=4,
                                 cv=5, scoring='neg_mean_absolute_error', random_state=42)
 
         grid.fit(X_train, y_train)
@@ -129,27 +129,27 @@ def classification_training(df_path: str, target: str) -> list:
     """
 
     MODELS = {
-        'LogReg': LogisticRegression(),
-        'TreeReg': DecisionTreeClassifier(),
-        'RF': RandomForestClassifier(),
-        'XGB': XGBClassifier(),
-        'LGBM': LGBMClassifier(force_col_wise=True),
+        'LogisticRegression': LogisticRegression(),
+        'DesicionTree': DecisionTreeClassifier(),
+        'RandomForest': RandomForestClassifier(),
+        'XGBoost': XGBClassifier(),
+        'LightGBM': LGBMClassifier(force_col_wise=True),
     }
 
     results = []
 
     grid_params = {
-        'LogReg': {
+        'LogisticRegression': {
             'model__penalty': ['l1', 'l2'],
             'model__C': [0.01, 0.1, 1, 10, 100],
             'model__solver': ['liblinear', 'saga']
         },
-        'RF': {
+        'RandomForest': {
             'model__n_estimators': [100, 200],
             'model__max_depth': [None, 10, 20],
             'model__min_samples_split': [2, 5],
         },
-        'XGB': {
+        'XGBoost': {
             'model__n_estimators': [100, 200],
             'model__max_depth': [3, 6],
             'model__learning_rate': [0.01, 0.1],
@@ -159,7 +159,7 @@ def classification_training(df_path: str, target: str) -> list:
             'model__min_samples_split': [2, 5, 10],
             'model__min_samples_leaf': [1, 2, 4]
         },
-        'LGBM': {
+        'LightGBM': {
             'model__n_estimators': [100, 300, 500, 1000],
             'model__learning_rate': [0.01, 0.03, 0.05, 0.1],
             'model__num_leaves': [20, 31, 50, 70, 100],

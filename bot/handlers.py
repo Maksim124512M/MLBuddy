@@ -1,3 +1,4 @@
+import os
 import httpx
 import pandas as pd
 import bot.bot_messages
@@ -135,21 +136,27 @@ async def target_setting(message: Message, state: FSMContext) -> None:
         await state.set_state(MakingPrediction.dataset_path)
 
         file_path = save_dataset_as_csv(df, message.from_user.id, file_id)
+        absolute_path = os.path.abspath(file_path)
+        print(absolute_path)
         
         await message.answer(bot.bot_messages.TRAINING_STARTED)
-        await state.update_data(dataset_path=file_path)
+        await state.update_data(dataset_path=absolute_path)
 
+        data = await state.get_data()
+        
         # Call the regression endpoint
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=120) as client:
             response = await client.post(
-                f'{settings.API_URL}/v1/predictions/regression',
-                json={'df_path': file_path, 'target': state.data['target']}
+                f'{settings.API_URL}/v1/predictions/regression/',
+                json={'df_path': data['dataset_path'], 'target': data['target']}
             )
+        print('STATUS:', response.status_code)
+        print('RESPONSE:', response.text[:500])
 
         results = response.json()
 
-        await message.answer(bot.bot_messages.TRAINING_COMPLETED.format(model_name=results['model'],
-                            mae=results['mae'], predictions=results['predictions_sample']))
+        await message.answer(bot.bot_messages.TRAINING_COMPLETED.format(model_name=results['model_name'],
+                            best_score=results['best_score'], predictions=results['predictions'], params=results['params']))
 
         await state.clear()
     else:
