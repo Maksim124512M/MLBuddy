@@ -12,7 +12,7 @@ def test_regression_endpoint():
     client = TestClient(app)
 
     file_path = os.path.join('tests', 'data', 'Titanic-Dataset.csv')
-    response = client.post('http://localhost:8000/v1/predictions/regression/', json={
+    response = client.post('http://localhost:8000/v2/regression/train/', json={
         'df_path': file_path, 
         'target': 'Survived'})
 

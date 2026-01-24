@@ -10,9 +10,9 @@ from core.config import settings
 
 @pytest.mark.asyncio
 async def test_prediction_flow():
-    """
+    '''
     Test the end-to-end prediction flow of the bot.
-    """
+    '''
 
     bot = Bot(token=settings.BOT_TOKEN)
     dp = Dispatcher(bot=bot)
@@ -22,12 +22,12 @@ async def test_prediction_flow():
 
     # Mock bot methods
     bot.session.make_request = AsyncMock(return_value={
-        "ok": True,
-        "result": {
-            "message_id": 1,
-            "chat": {"id": 123, "type": "private"},
-            "date": 1670000000,
-            "text": "ok"
+        'ok': True,
+        'result': {
+            'message_id': 1,
+            'chat': {'id': 123, 'type': 'private'},
+            'date': 1670000000,
+            'text': 'ok'
         }
     })
 
@@ -93,7 +93,7 @@ async def test_prediction_flow():
             date=1670000000,
             chat={'id': 123, 'type': 'private'},
             from_user={'id': 123, 'is_bot': False, 'first_name': 'Max'},
-            text='regression'
+            text='Regression'
         )
     )
     await dp.feed_update(bot=bot, update=update_task)

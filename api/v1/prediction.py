@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from ml.src.models_training import regression_training
+from ml.src.regression import regression_training
 
 router = APIRouter()
 

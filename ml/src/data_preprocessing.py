@@ -39,7 +39,7 @@ def build_column_transformer(df: pd.DataFrame) -> ColumnTransformer:
     """
 
     numeric_cols = df.select_dtypes(include=['int64', 'float64']).columns
-    cat_cols = df.select_dtypes(include=['object', 'category']).columns
+    cat_cols = df.select_dtypes(include=['string', 'category']).columns
 
     numeric_transformer = Pipeline([
         ('imputer', SimpleImputer(strategy='mean')),
