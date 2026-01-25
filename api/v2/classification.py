@@ -1,19 +1,14 @@
 from fastapi import APIRouter
-from pydantic import BaseModel
 
 from ml.src.tasks.classification import classification_task
 
 from celery.result import AsyncResult
-
 from core.celery_app import celery_app
+
+from api.db.schemas import PredictionRequest
 
 
 router = APIRouter()
-
-class PredictionRequest(BaseModel):
-    df_path: str
-    target: str
-
 
 @router.post('/train/')
 async def classification_predict(data: PredictionRequest):

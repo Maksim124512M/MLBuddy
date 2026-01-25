@@ -14,12 +14,15 @@ from core.config import settings
 
 from bot.utils import save_dataset_as_csv, poll_training_status
 
+from api.db.crud import users
+from api.db.db_config import SessionLocal
+
 router = Router()
 
 class MakingPrediction(StatesGroup):
-    '''
+    """
     States for making a prediction.
-    '''
+    """
 
     csv_dataset_id = State()
     task_type = State()
@@ -29,7 +32,7 @@ class MakingPrediction(StatesGroup):
 
 @router.message(Command('start'))
 async def start(message: Message) -> None:
-    '''
+    """
     Handle the /start command.
 
     Parameters:
@@ -37,14 +40,23 @@ async def start(message: Message) -> None:
 
     Returns:
         None
-    '''
+    """
+    db = SessionLocal()
+    try:
+        users.get_or_create_user(
+            db=db, 
+            tg_id=message.from_user.id, 
+            username=message.from_user.username
+        )
+    finally:
+        db.close()
 
     await message.answer(bot.bot_messages.WELCOME_MESSAGE, reply_markup=bot.keyboards.main_menu)
 
 @router.message(Command('prediction'))
 @router.message(F.text == 'Make new prediction')
 async def make_prediction_first_stage(message: Message, state: FSMContext) -> None:
-    '''
+    """
     Start the prediction process.
 
     Parameters:
@@ -53,7 +65,7 @@ async def make_prediction_first_stage(message: Message, state: FSMContext) -> No
 
     Returns:
         None
-    '''
+    """
 
     await state.set_state(MakingPrediction.csv_dataset_id)
     await message.answer(bot.bot_messages.DATASET_UPLOADING_MESSAGE)
@@ -61,7 +73,7 @@ async def make_prediction_first_stage(message: Message, state: FSMContext) -> No
 
 @router.message(MakingPrediction.csv_dataset_id)
 async def dataset_uploading(message: Message, state: FSMContext) -> None:
-    '''
+    """
     Handle dataset uploading.
 
     Parameters:
@@ -70,7 +82,7 @@ async def dataset_uploading(message: Message, state: FSMContext) -> None:
 
     Returns:
         None
-    '''
+    """
 
     # Check if the uploaded file is a CSV
     if message.document.mime_type == 'text/csv':
@@ -93,7 +105,7 @@ async def dataset_uploading(message: Message, state: FSMContext) -> None:
 
 @router.message(MakingPrediction.task_type)
 async def setting_task_type(message: Message, state: FSMContext) -> None:
-    '''
+    """
     Set the task type for prediction.
 
     Parameters:
@@ -102,7 +114,7 @@ async def setting_task_type(message: Message, state: FSMContext) -> None:
 
     Returns:
         None
-    '''
+    """
 
     await state.update_data(task_type=message.text)
     await state.set_state(MakingPrediction.target)
@@ -111,7 +123,7 @@ async def setting_task_type(message: Message, state: FSMContext) -> None:
 
 @router.message(MakingPrediction.target)
 async def target_setting(message: Message, state: FSMContext) -> None:
-    '''
+    """
     Set the target column and start training.
 
     Parameters:
@@ -120,7 +132,7 @@ async def target_setting(message: Message, state: FSMContext) -> None:
 
     Returns:
         None
-    '''
+    """
 
     data = await state.get_data()
     file_id = data['csv_dataset_id']
@@ -160,3 +172,17 @@ async def target_setting(message: Message, state: FSMContext) -> None:
         os.remove(absolute_path)
 
     await state.clear()
+
+
+@router.message(Command('me'))
+async def get_my_profile(message: Message):
+    user = users.get_user_profile(tg_id=message.from_user.id)
+
+    if not user:
+        return await message.answer('❌ User not found. First execute /start')
+
+    await message.answer(bot.bot_messages.USER_PROFILE.format(
+        telegram_id=str(user.telegram_id),
+        username=user.username,
+        created_at=user.created_at.strftime('%Y-%m-%d %H:%M'),
+    ))

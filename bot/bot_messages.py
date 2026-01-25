@@ -53,3 +53,11 @@ MAE (mean absolute error): {best_score}
 - Params: {params}
 
 """
+
+USER_PROFILE = """
+👤 Your profile
+
+🆔 Telegram ID: {telegram_id}
+👤 Username: {username}
+📅 Joined: {created_at}
+"""
