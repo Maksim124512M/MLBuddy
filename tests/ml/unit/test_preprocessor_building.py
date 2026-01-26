@@ -1,9 +1,10 @@
 import os
+
 import pandas as pd
+from sklearn.compose import ColumnTransformer
 
 from ml.src.data_preprocessing import build_column_transformer
 
-from sklearn.compose import ColumnTransformer
 
 def test_build_column_transformer():
     file_path = os.path.join('tests', 'data', 'Titanic-Dataset.csv')

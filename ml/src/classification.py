@@ -1,18 +1,16 @@
-import pandas as pd
 import multiprocessing
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from xgboost import XGBClassifier
+import pandas as pd
 from lightgbm import LGBMClassifier
-
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import RandomizedSearchCV
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.pipeline import Pipeline
+from sklearn.tree import DecisionTreeClassifier
+from xgboost import XGBClassifier
 
-from ml.src.data_preprocessing import split_dataset, build_column_transformer
-
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from ml.src.data_preprocessing import build_column_transformer, split_dataset
 
 
 def train_single_model(
@@ -25,20 +23,36 @@ def train_single_model(
     y_test,
     preprocessor,
 ):
-    pipeline = Pipeline([
-        ('preprocessor', preprocessor),
-        ('model', model_class),
-    ])
+    """
+    Train and evaluate classification models.
 
-    X_tr = X_train
-    y_tr = y_train
+    Parameters:
+        model_name (str): Name of the model.
+        model_class: The model class to instantiate.
+        params (dict): Hyperparameter grid for RandomizedSearchCV.
+        X_train (pd.DataFrame): Training features.
+        X_test (pd.DataFrame): Testing features.
+        y_train (pd.Series): Training target.
+        y_test (pd.Series): Testing target.
+        preprocessor (ColumnTransformer): Preprocessing pipeline.
+
+    Returns:
+        dict: Dictionary containing model name, best score, predictions, and best parameters.
+    """
+
+    pipeline = Pipeline(
+        [
+            ('preprocessor', preprocessor),
+            ('model', model_class),
+        ]
+    )
 
     X_test = pd.DataFrame(X_test, columns=X_train.columns)
 
     if len(X_train) > 50_000 and model_name in ('XGBoost', 'LightGBM'):
         idx = X_train.sample(50_000, random_state=42).index
-        X_tr = X_train.loc[idx]
-        y_tr = y_train.loc[idx]
+        X_train = X_train.loc[idx]
+        y_train = y_train.loc[idx]
 
     grid = RandomizedSearchCV(
         estimator=pipeline,
@@ -85,7 +99,7 @@ def classification_training(task, df_path: str, target: str) -> list:
         'LogisticRegression': {
             'model__penalty': ['l1', 'l2'],
             'model__C': [0.01, 0.1, 1, 10, 100],
-            'model__solver': ['liblinear', 'saga']
+            'model__solver': ['liblinear', 'saga'],
         },
         'RandomForest': {
             'model__n_estimators': [100, 200],
@@ -100,7 +114,7 @@ def classification_training(task, df_path: str, target: str) -> list:
         'DesicionTree': {
             'model__max_depth': [None, 4, 6, 8],
             'model__min_samples_split': [2, 5, 10],
-            'model__min_samples_leaf': [1, 2, 4]
+            'model__min_samples_leaf': [1, 2, 4],
         },
         'LightGBM': {
             'model__n_estimators': [100, 300, 500, 1000],
@@ -111,7 +125,7 @@ def classification_training(task, df_path: str, target: str) -> list:
             'model__subsample': [0.6, 0.8, 1.0],
             'model__colsample_bytree': [0.6, 0.8, 1.0],
             'model__reg_alpha': [0, 0.01, 0.1, 1],
-            'model__reg_lambda': [0, 0.01, 0.1, 1]
+            'model__reg_lambda': [0, 0.01, 0.1, 1],
         },
     }
 
@@ -124,10 +138,7 @@ def classification_training(task, df_path: str, target: str) -> list:
     results = []
 
     total = len(MODELS)
-    max_workers = min(
-        len(MODELS),
-        max(1, multiprocessing.cpu_count() - 1)
-    )
+    max_workers = min(len(MODELS), max(1, multiprocessing.cpu_count() - 1))
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         for i, (model_name, model_class) in enumerate(MODELS.items(), start=1):
@@ -139,8 +150,8 @@ def classification_training(task, df_path: str, target: str) -> list:
                     'current': i,
                     'total': total,
                     'model': model_name,
-                    'step': 'training'
-                }
+                    'step': 'training',
+                },
             )
 
             tasks.append(

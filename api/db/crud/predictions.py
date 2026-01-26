@@ -5,10 +5,10 @@ from api.db.schemas import TaskType
 
 
 def create_new_prediction(
-    db: Session, 
-    user_telegram_id: str, 
-    task_type: TaskType, 
-    best_model: str, 
+    db: Session,
+    user_telegram_id: str,
+    task_type: TaskType,
+    best_model: str,
     target: str,
     metric: float,
     dataset_hash: str,

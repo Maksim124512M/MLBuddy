@@ -12,9 +12,7 @@ class Settings(BaseSettings):
     DB_PORT: str
     DB_URL: str
 
-    model_config = SettingsConfigDict(
-        env_file='.env',
-        env_file_encoding='utf-8'
-    )
+    model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
+
 
 settings = Settings()

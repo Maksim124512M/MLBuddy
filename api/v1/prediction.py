@@ -5,6 +5,7 @@ from ml.src.regression import regression_training
 
 router = APIRouter()
 
+
 class PredictionRequest(BaseModel):
     df_path: str
     target: str
@@ -22,5 +23,5 @@ async def regression_predict(data: PredictionRequest):
         'model_name': best_result['model_name'],
         'best_score': float(best_result['best_score']),
         'predictions': best_result['predictions'][:5],
-        'params': best_result.get('params', {})
+        'params': best_result.get('params', {}),
     }

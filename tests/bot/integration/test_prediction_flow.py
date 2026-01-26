@@ -1,8 +1,8 @@
-import pytest
 from unittest.mock import AsyncMock
 
+import pytest
 from aiogram import Bot, Dispatcher
-from aiogram.types import Update, Message, Document
+from aiogram.types import Document, Message, Update
 
 from bot.handlers import router
 from core.config import settings
@@ -10,9 +10,9 @@ from core.config import settings
 
 @pytest.mark.asyncio
 async def test_prediction_flow():
-    '''
+    """
     Test the end-to-end prediction flow of the bot.
-    '''
+    """
 
     bot = Bot(token=settings.BOT_TOKEN)
     dp = Dispatcher(bot=bot)
@@ -21,15 +21,17 @@ async def test_prediction_flow():
     csv_bytes = b'col1,col2,target\n1,2,0\n3,4,1'
 
     # Mock bot methods
-    bot.session.make_request = AsyncMock(return_value={
-        'ok': True,
-        'result': {
-            'message_id': 1,
-            'chat': {'id': 123, 'type': 'private'},
-            'date': 1670000000,
-            'text': 'ok'
+    bot.session.make_request = AsyncMock(
+        return_value={
+            'ok': True,
+            'result': {
+                'message_id': 1,
+                'chat': {'id': 123, 'type': 'private'},
+                'date': 1670000000,
+                'text': 'ok',
+            },
         }
-    })
+    )
 
     bot.get_file = AsyncMock(return_value=type('File', (), {'file_path': 'fake_path'}))
     bot.download_file = AsyncMock(return_value=csv_bytes)
@@ -40,7 +42,7 @@ async def test_prediction_flow():
         file_unique_id='FAKE_UNIQUE_ID',
         file_name='test.csv',
         mime_type='text/csv',
-        file_size=123
+        file_size=123,
     )
 
     # Simulate /start command
@@ -51,8 +53,8 @@ async def test_prediction_flow():
             date=1670000000,
             chat={'id': 123, 'type': 'private'},
             text='/start',
-            from_user={'id': 123, 'is_bot': False, 'first_name': 'Max'}
-        )
+            from_user={'id': 123, 'is_bot': False, 'first_name': 'Max'},
+        ),
     )
 
     await dp.feed_update(bot=bot, update=update1)
@@ -67,7 +69,7 @@ async def test_prediction_flow():
             text='Making new prediction',
             from_user={'id': 123, 'is_bot': False, 'first_name': 'Max'},
             document=fake_document,
-        )
+        ),
     )
 
     await dp.feed_update(bot=bot, update=update2)
@@ -80,8 +82,8 @@ async def test_prediction_flow():
             date=1670000000,
             chat={'id': 123, 'type': 'private'},
             from_user={'id': 123, 'is_bot': False, 'first_name': 'Max'},
-            document=fake_document
-        )
+            document=fake_document,
+        ),
     )
     await dp.feed_update(bot=bot, update=update_csv)
 
@@ -93,8 +95,8 @@ async def test_prediction_flow():
             date=1670000000,
             chat={'id': 123, 'type': 'private'},
             from_user={'id': 123, 'is_bot': False, 'first_name': 'Max'},
-            text='Regression'
-        )
+            text='Regression',
+        ),
     )
     await dp.feed_update(bot=bot, update=update_task)
 
@@ -106,8 +108,8 @@ async def test_prediction_flow():
             date=1670000000,
             chat={'id': 123, 'type': 'private'},
             from_user={'id': 123, 'is_bot': False, 'first_name': 'Max'},
-            text='target'
-        )
+            text='target',
+        ),
     )
     await dp.feed_update(bot=bot, update=update_target)
 

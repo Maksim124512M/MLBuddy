@@ -1,6 +1,4 @@
-from api.db.db_config import engine, Base
-from api.db import models
-
+from api.db.db_config import Base, engine
 
 Base.metadata.create_all(bind=engine)
 

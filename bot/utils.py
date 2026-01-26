@@ -1,23 +1,21 @@
-import httpx
 import asyncio
 import hashlib
-import pandas as pd
-import bot.bot_messages
-
 from pathlib import Path
 
+import httpx
+import pandas as pd
 from aiogram.types import Message
 
-from core.config import settings
-
-from api.db.db_config import SessionLocal
+import bot.bot_messages
 from api.db.crud.predictions import create_new_prediction
-
+from api.db.db_config import SessionLocal
+from core.config import settings
 
 DATASET_STORAGE_DIR = Path('storage/datasets')
 
+
 def save_dataset_as_csv(df: pd.DataFrame, user_id: str, dataset_id: str) -> str:
-    '''
+    """
     Save the dataset as a CSV file.
 
     Parameters:
@@ -27,7 +25,7 @@ def save_dataset_as_csv(df: pd.DataFrame, user_id: str, dataset_id: str) -> str:
 
     Returns:
         str: Path to the saved CSV file.
-    '''
+    """
 
     DATASET_STORAGE_DIR.mkdir(parents=True, exist_ok=True)
     file_name = f'{user_id}_{dataset_id}.csv'
@@ -38,15 +36,37 @@ def save_dataset_as_csv(df: pd.DataFrame, user_id: str, dataset_id: str) -> str:
 
 
 def generate_dataset_hash(csv_path: str) -> str:
+    """
+    Generate a SHA-256 hash of the dataset file.
+    Parameters:
+        csv_path (str): Path to the CSV file.
+    Returns:
+        str: SHA-256 hash of the file.
+    """
+
     hasher = hashlib.sha256()
     with open(csv_path, 'rb') as f:
-        for chunk in iter(lambda: f.read(4096), b""):
+        for chunk in iter(lambda: f.read(4096), b''):
             hasher.update(chunk)
 
     return hasher.hexdigest()
 
 
-async def poll_training_status(message: Message, task_id: str, task_type: str, target: str, dataset_hash: str):
+async def poll_training_status(
+    message: Message, task_id: str, task_type: str, target: str, dataset_hash: str
+) -> None:
+    """
+    Poll the training status of a task and notify the user upon completion.
+    Parameters:
+        message (Message): The message object to send updates to the user.
+        task_id (str): The ID of the training task.
+        task_type (str): The type of the task (e.g., 'Regression', 'Classification').
+        target (str): The target variable for the prediction.
+        dataset_hash (str): The hash of the dataset used.
+    Returns:
+        None
+    """
+
     async with httpx.AsyncClient() as client:
         sent_progress = False
 
@@ -75,7 +95,8 @@ async def poll_training_status(message: Message, task_id: str, task_type: str, t
                 result = data['info']
                 best = result['best_model']
 
-                await message.answer(bot.bot_messages.TRAINING_COMPLETED.format(
+                await message.answer(
+                    bot.bot_messages.TRAINING_COMPLETED.format(
                         model_name=best['model_name'],
                         metric=metric,
                         best_score=best['best_score'],
@@ -84,24 +105,17 @@ async def poll_training_status(message: Message, task_id: str, task_type: str, t
                     )
                 )
 
-                # await message.answer(
-                #     f'✅ Training completed\n\n'
-                #     f'🏆 Model: {best['model_name']}\n'
-                #     f'📉 {metric}: {best['best_score']:.4f}'
-                #     f'Predictions: '
-                # )
-
                 with SessionLocal() as db:
                     create_new_prediction(
-                        db=db, 
+                        db=db,
                         user_telegram_id=message.from_user.id,
-                        task_type=task_type, 
-                        best_model=best['model_name'], 
+                        task_type=task_type,
+                        best_model=best['model_name'],
                         target=target,
                         metric=best['best_score'],
                         dataset_hash=dataset_hash,
                     )
-                break   
+                break
 
             elif data['state'] == 'FAILURE':
                 await message.answer('❌ Training failed')

@@ -1,5 +1,4 @@
 from core.celery_app import celery_app
-
 from ml.src.regression import regression_training
 
 

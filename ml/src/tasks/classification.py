@@ -1,5 +1,4 @@
 from core.celery_app import celery_app
-
 from ml.src.classification import classification_training
 
 

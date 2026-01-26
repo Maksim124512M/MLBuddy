@@ -1,23 +1,23 @@
 import os
+
 import httpx
 import pandas as pd
-import bot.bot_messages
-import bot.keyboards
-
 from aiogram import F, Router
 from aiogram.filters import Command
-from aiogram.types import Message
-from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.types import Message
 
-from core.config import settings
-
-from bot.utils import save_dataset_as_csv, generate_dataset_hash, poll_training_status
-
+import bot.bot_messages
+import bot.keyboards
 from api.db.crud import users
 from api.db.db_config import SessionLocal
+from bot.utils import (generate_dataset_hash, poll_training_status,
+                       save_dataset_as_csv)
+from core.config import settings
 
 router = Router()
+
 
 class MakingPrediction(StatesGroup):
     """
@@ -41,17 +41,19 @@ async def start(message: Message) -> None:
     Returns:
         None
     """
+
     db = SessionLocal()
     try:
         users.get_or_create_user(
-            db=db, 
-            tg_id=message.from_user.id, 
-            username=message.from_user.username
+            db=db, tg_id=message.from_user.id, username=message.from_user.username
         )
     finally:
         db.close()
 
-    await message.answer(bot.bot_messages.WELCOME_MESSAGE, reply_markup=bot.keyboards.main_menu)
+    await message.answer(
+        bot.bot_messages.WELCOME_MESSAGE, reply_markup=bot.keyboards.main_menu
+    )
+
 
 @router.message(Command('prediction'))
 @router.message(F.text == 'Make new prediction')
@@ -94,8 +96,12 @@ async def dataset_uploading(message: Message, state: FSMContext) -> None:
 
         rows_count, columns_count = df.shape
 
-        await message.answer(bot.bot_messages.TASK_TYPE_SETTINGS.format(rows=rows_count, columns=columns_count),
-                            reply_markup=bot.keyboards.task_types_markup)
+        await message.answer(
+            bot.bot_messages.TASK_TYPE_SETTINGS.format(
+                rows=rows_count, columns=columns_count
+            ),
+            reply_markup=bot.keyboards.task_types_markup,
+        )
 
         await state.update_data(csv_dataset_id=file_id)
         await state.set_state(MakingPrediction.task_type)
@@ -162,7 +168,7 @@ async def target_setting(message: Message, state: FSMContext) -> None:
             json={
                 'df_path': absolute_path,
                 'target': target,
-            }
+            },
         )
 
     task_id = response.json()['task_id']
@@ -178,13 +184,23 @@ async def target_setting(message: Message, state: FSMContext) -> None:
 
 @router.message(Command('me'))
 async def get_my_profile(message: Message):
+    """
+    Retrieve and display the user's profile information.
+    Parameters:
+        message (Message): Incoming message.
+    Returns:
+        None
+    """
+
     user = users.get_user_profile(tg_id=message.from_user.id)
 
     if not user:
         return await message.answer('❌ User not found. First execute /start')
 
-    await message.answer(bot.bot_messages.USER_PROFILE.format(
-        telegram_id=str(user.telegram_id),
-        username=user.username,
-        created_at=user.created_at.strftime('%Y-%m-%d %H:%M'),
-    ))
+    await message.answer(
+        bot.bot_messages.USER_PROFILE.format(
+            telegram_id=str(user.telegram_id),
+            username=user.username,
+            created_at=user.created_at.strftime('%Y-%m-%d %H:%M'),
+        )
+    )
