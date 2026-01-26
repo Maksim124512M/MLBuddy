@@ -1,15 +1,15 @@
 import pandas as pd
 import multiprocessing
 
-from xgboost import XGBRegressor, XGBClassifier
-from lightgbm import LGBMRegressor, LGBMClassifier
+from xgboost import XGBRegressor
+from lightgbm import LGBMRegressor
 
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import RandomizedSearchCV
-from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
-from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
-from sklearn.linear_model import Ridge, LinearRegression, LogisticRegression
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import Ridge, LinearRegression
 
 from ml.src.data_preprocessing import split_dataset, build_column_transformer
 

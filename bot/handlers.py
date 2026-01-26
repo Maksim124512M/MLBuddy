@@ -12,7 +12,7 @@ from aiogram.fsm.context import FSMContext
 
 from core.config import settings
 
-from bot.utils import save_dataset_as_csv, poll_training_status
+from bot.utils import save_dataset_as_csv, generate_dataset_hash, poll_training_status
 
 from api.db.crud import users
 from api.db.db_config import SessionLocal
@@ -150,6 +150,9 @@ async def target_setting(message: Message, state: FSMContext) -> None:
 
     file_path = save_dataset_as_csv(df, message.from_user.id, file_id)
     absolute_path = os.path.abspath(file_path)
+    dataset_hash = generate_dataset_hash(absolute_path)
+
+    target = message.text
 
     await message.answer(bot.bot_messages.TRAINING_STARTED)
 
@@ -158,15 +161,14 @@ async def target_setting(message: Message, state: FSMContext) -> None:
             f'{settings.API_URL}/v2/{task_type}/train/',
             json={
                 'df_path': absolute_path,
-                'target': message.text
+                'target': target,
             }
         )
 
     task_id = response.json()['task_id']
-
     await message.answer(f'🆔 Task ID: `{task_id}`')
 
-    await poll_training_status(message, task_id, task_type)
+    await poll_training_status(message, task_id, task_type, target, dataset_hash)
 
     if os.path.exists(absolute_path):
         os.remove(absolute_path)

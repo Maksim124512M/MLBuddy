@@ -1,13 +1,16 @@
 import httpx
 import asyncio
+import hashlib
 import pandas as pd
-import bot.bot_messages
 
 from pathlib import Path
 
 from aiogram.types import Message
 
 from core.config import settings
+
+from api.db.db_config import SessionLocal
+from api.db.crud.predictions import create_new_prediction
 
 
 DATASET_STORAGE_DIR = Path('storage/datasets')
@@ -33,7 +36,16 @@ def save_dataset_as_csv(df: pd.DataFrame, user_id: str, dataset_id: str) -> str:
     return str(file_path)
 
 
-async def poll_training_status(message: Message, task_id: str, task_type: str):
+def generate_dataset_hash(csv_path: str) -> str:
+    hasher = hashlib.sha256()
+    with open(csv_path, 'rb') as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hasher.update(chunk)
+
+    return hasher.hexdigest()
+
+
+async def poll_training_status(message: Message, task_id: str, task_type: str, target: str, dataset_hash: str):
     async with httpx.AsyncClient() as client:
         sent_progress = False
 
@@ -67,7 +79,18 @@ async def poll_training_status(message: Message, task_id: str, task_type: str):
                     f'🏆 Model: {best['model_name']}\n'
                     f'📉 {metric}: {best['best_score']:.4f}'
                 )
-                break
+
+                with SessionLocal() as db:
+                    create_new_prediction(
+                        db=db, 
+                        user_telegram_id=message.from_user.id,
+                        task_type=task_type, 
+                        best_model=best['model_name'], 
+                        target=target,
+                        metric=best['best_score'],
+                        dataset_hash=dataset_hash,
+                    )
+                break   
 
             elif data['state'] == 'FAILURE':
                 await message.answer('❌ Training failed')
