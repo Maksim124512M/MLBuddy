@@ -46,7 +46,7 @@ TRAINING_COMPLETED = """
 ✅ Prediction Result
 
 Best model: {model_name}
-MAE (mean absolute error): {best_score}
+{metric}: {best_score}
 
 📌 Example predictions:
 - Predicted: {predictions}

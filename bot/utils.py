@@ -2,6 +2,7 @@ import httpx
 import asyncio
 import hashlib
 import pandas as pd
+import bot.bot_messages
 
 from pathlib import Path
 
@@ -74,11 +75,21 @@ async def poll_training_status(message: Message, task_id: str, task_type: str, t
                 result = data['info']
                 best = result['best_model']
 
-                await message.answer(
-                    f'✅ Training completed\n\n'
-                    f'🏆 Model: {best['model_name']}\n'
-                    f'📉 {metric}: {best['best_score']:.4f}'
+                await message.answer(bot.bot_messages.TRAINING_COMPLETED.format(
+                        model_name=best['model_name'],
+                        metric=metric,
+                        best_score=best['best_score'],
+                        predictions=best['predictions'][:5],
+                        params=best['params'],
+                    )
                 )
+
+                # await message.answer(
+                #     f'✅ Training completed\n\n'
+                #     f'🏆 Model: {best['model_name']}\n'
+                #     f'📉 {metric}: {best['best_score']:.4f}'
+                #     f'Predictions: '
+                # )
 
                 with SessionLocal() as db:
                     create_new_prediction(
