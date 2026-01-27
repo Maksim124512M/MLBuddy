@@ -4,8 +4,8 @@ from pydantic import BaseModel
 
 
 class TaskType(str, Enum):
-    classification = 'сlassification'
-    regression = 'regression'
+    classification = 'Classification'
+    regression = 'Regression'
 
 
 class PredictionRequest(BaseModel):

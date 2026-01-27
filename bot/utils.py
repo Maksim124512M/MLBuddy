@@ -9,6 +9,7 @@ from aiogram.types import Message
 import bot.bot_messages
 from api.db.crud.predictions import create_new_prediction
 from api.db.db_config import SessionLocal
+from api.db.schemas import TaskType
 from core.config import settings
 
 DATASET_STORAGE_DIR = Path('storage/datasets')
@@ -53,7 +54,7 @@ def generate_dataset_hash(csv_path: str) -> str:
 
 
 async def poll_training_status(
-    message: Message, task_id: str, task_type: str, target: str, dataset_hash: str
+    message: Message, task_id: str, task_type: TaskType, target: str, dataset_hash: str
 ) -> None:
     """
     Poll the training status of a task and notify the user upon completion.
@@ -70,12 +71,7 @@ async def poll_training_status(
     async with httpx.AsyncClient() as client:
         sent_progress = False
 
-        metric = 'MAE' if task_type == 'Regression' else 'F1'
-
-        if task_type == 'Regression':
-            metric = 'MAE'
-        else:
-            metric = 'F1'
+        metric = 'MAE' if task_type == TaskType.regression else TaskType.classification
 
         while True:
             await asyncio.sleep(5)
@@ -112,7 +108,7 @@ async def poll_training_status(
                         task_type=task_type,
                         best_model=best['model_name'],
                         target=target,
-                        metric=best['best_score'],
+                        metric=float(best['best_score']),
                         dataset_hash=dataset_hash,
                     )
                 break

@@ -37,7 +37,7 @@ class Prediction(Base):
     task_type = Column(Enum(TaskType), nullable=False)
     best_model = Column(String, nullable=False)
     target = Column(String, nullable=False)
-    metric = Column(Float, nullable=True)
+    metric = Column(Float, nullable=False)
     dataset_hash = Column(String, nullable=True)
     created_at = Column(
         DateTime(timezone=True), nullable=False, server_default=func.now()

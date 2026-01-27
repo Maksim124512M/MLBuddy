@@ -11,6 +11,7 @@ from aiogram.types import Message
 import bot.bot_messages
 import bot.keyboards
 from api.db.crud import users
+from api.db.crud.predictions import get_user_prediction
 from api.db.db_config import SessionLocal
 from bot.utils import (generate_dataset_hash, poll_training_status,
                        save_dataset_as_csv)
@@ -204,3 +205,29 @@ async def get_my_profile(message: Message):
             created_at=user.created_at.strftime('%Y-%m-%d %H:%M'),
         )
     )
+
+
+@router.message(Command('my_history'))
+async def my_predictions_history(message: Message):
+    with SessionLocal() as db:
+        predictions = get_user_prediction(
+            db=db,
+            user_telegram_id=message.from_user.id,
+        )
+
+    if not predictions:
+        return await message.answer("You haven't made any predictions yet")
+
+    text = '📊 Your prediction history:\n\n'
+
+    for i, p in enumerate(predictions, 1):
+        metric_name = 'MAE' if p.task_type == 'Regression' else 'F1'
+        text += (
+            f'{i}️⃣ {p.created_at:%Y-%m-%d}\n'
+            f'🎯 Target: {p.target}\n'
+            f'🤖 Model: {p.best_model}\n'
+            f'🧠 Task type: {p.task_type.name.capitalize()}\n'
+            f'📈 Metric ({metric_name}): {p.metric}\n\n'
+        )
+
+    await message.answer(text)
