@@ -1,0 +1,69 @@
+version: "3.12"
+
+services:
+  init-db:
+      build:
+        context: .
+        dockerfile: api/Dockerfile
+      command: ["/app/wait-for-db.sh", "db", "python", "-m", "api.db.create_tables"]
+      depends_on:
+        - db
+      env_file:
+        - .env
+        
+  bot:
+    build: 
+      context: .
+      dockerfile: bot/Dockerfile
+    command: ["/app/wait-for-db.sh", "db", "python", "-m", "bot.run"]
+    depends_on:
+      - db
+      - api
+      - redis
+      - init-db
+    env_file:
+      - .env
+    environment:
+      - PYTHONPATH=/app
+
+  api:
+    build: 
+      context: .
+      dockerfile: api/Dockerfile
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 
+    depends_on:
+      - db
+      - redis
+      - init-db
+    env_file:
+      - .env
+
+  celery:
+    build: 
+      context: .
+      dockerfile: api/Dockerfile
+    command: celery -A core.celery_app worker --loglevel=info
+    depends_on:
+      - redis
+      - db
+    env_file:
+      - .env
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:
